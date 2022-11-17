@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-prefer-ts-over-lodash",
-  "version": "0.0.0-rc.2",
+  "version": "0.0.0-rc.3",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "files": [
@@ -10,7 +10,7 @@
   "scripts": {
     "start": "ts-node-dev --respawn ./lib/tests/lib/rules/no-get.ts",
     "build": "rm -rf dist && tsc -p tsconfig.cjs.json && tsc -p tsconfig.json",
-    "prepublish": "yarn build"
+    "prepare": "yarn build"
   },
   "dependencies": {
     "@typescript-eslint/utils": "^5.43.0"

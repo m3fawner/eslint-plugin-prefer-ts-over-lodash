@@ -2,13 +2,15 @@ import {
   ESLintUtils, type TSESTree, type TSESLint, AST_NODE_TYPES,
 } from '@typescript-eslint/utils';
 
-type PathNode = TSESTree.ArrayExpression | TSESTree.StringLiteral;
+type PathNode = TSESTree.ArrayExpression | TSESTree.StringLiteral | TSESTree.Identifier;
 const getPathReplacementString = (path: PathNode): string => {
   switch (path.type) {
     case AST_NODE_TYPES.Literal:
       return path.value.split('.').join('?.').replaceAll(/\[(.*)\]/g, '?.[$1]');
     case AST_NODE_TYPES.ArrayExpression:
       return (path.elements as TSESTree.Literal[]).map(({ value }) => value).join('?.');
+    case AST_NODE_TYPES.Identifier:
+      return `[${path.name}]`;
     default:
       return '';
   }

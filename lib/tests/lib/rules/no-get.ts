@@ -71,6 +71,12 @@ ruleTester.run('no-get rule', rule, {
       errors: [{ messageId: 'default' }],
       output: 'const object = {};const value = object?.test?.[0] ?? {};',
     },
+    {
+      code: 'import get from \'lodash/get\';const object = {};const path = window.location;const value = get(object, path, {});',
+      errors: [{ messageId: 'default' }],
+      output: 'const object = {};const path = window.location;const value = object?.[path] ?? {};',
+    },
   ],
 });
+
 export default {};
