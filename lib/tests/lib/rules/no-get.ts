@@ -51,7 +51,26 @@ ruleTester.run('no-get rule', rule, {
       errors: [{ messageId: 'destructured' }],
       output: 'const object = {};const value = object?.nested?.three ?? \'\';',
     },
+    {
+      code: 'import get from \'lodash/get\';const object = {};const fallback = {};const value = get(object, \'nested\', fallback);',
+      errors: [{ messageId: 'default' }],
+      output: 'const object = {};const fallback = {};const value = object?.nested ?? fallback;',
+    },
+    {
+      code: 'import get from \'lodash/get\';const object = {};const value = get(object, \'nested\', {});',
+      errors: [{ messageId: 'default' }],
+      output: 'const object = {};const value = object?.nested ?? {};',
+    },
+    {
+      code: 'import get from \'lodash/get\';const object = {};const value = get(object, [\'nested\',\'second\'], {});',
+      errors: [{ messageId: 'default' }],
+      output: 'const object = {};const value = object?.nested?.second ?? {};',
+    },
+    {
+      code: 'import get from \'lodash/get\';const object = {};const value = get(object, \'test[0]\', {});',
+      errors: [{ messageId: 'default' }],
+      output: 'const object = {};const value = object?.test?.[0] ?? {};',
+    },
   ],
 });
-
 export default {};

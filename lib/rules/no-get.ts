@@ -1,5 +1,18 @@
-import { ESLintUtils, type TSESTree, type TSESLint } from '@typescript-eslint/utils';
+import {
+  ESLintUtils, type TSESTree, type TSESLint, AST_NODE_TYPES,
+} from '@typescript-eslint/utils';
 
+type PathNode = TSESTree.ArrayExpression | TSESTree.StringLiteral;
+const getPathReplacementString = (path: PathNode): string => {
+  switch (path.type) {
+    case AST_NODE_TYPES.Literal:
+      return path.value.split('.').join('?.').replaceAll(/\[(.*)\]/g, '?.[$1]');
+    case AST_NODE_TYPES.ArrayExpression:
+      return (path.elements as TSESTree.Literal[]).map(({ value }) => value).join('?.');
+    default:
+      return '';
+  }
+};
 type UsagesArg = {
   context: Parameters<ESLintUtils.RuleCreateAndOptions<any, any, any>['create']>[0];
   node: TSESTree.ImportSpecifier | TSESTree.ImportDefaultSpecifier;
@@ -20,11 +33,10 @@ const removeUsages = ({
     const tokenParentNode = sourceCode.getNodeByRangeIndex(range[0])?.parent;
     if (type === 'Identifier' && value === namedVariable && tokenParentNode?.type === 'CallExpression') {
       const { arguments: args } = tokenParentNode;
-      const targetObj = args[0] as TSESTree.Identifier;
-      const path = args[1] as TSESTree.Literal;
-      const fallback = args[2] as (TSESTree.Literal | TSESTree.Identifier);
-      const chainedPath = (path.value as string).split('.').join('?.');
-      fixes.push(fixer.insertTextAfter(tokenParentNode, `${targetObj.name}?.${chainedPath}${fallback ? ` ?? ${(fallback as TSESTree.Literal).raw ?? (fallback as TSESTree.Identifier).name}` : ''}`));
+      const targetObj = args[0] as TSESTree.Node;
+      const path = args[1] as PathNode;
+      const fallback = args[2] as TSESTree.Node;
+      fixes.push(fixer.insertTextAfter(tokenParentNode, `${sourceCode.getText(targetObj)}?.${getPathReplacementString(path)}${fallback ? ` ?? ${sourceCode.getText(fallback)}` : ''}`));
       fixes.push(fixer.remove(tokenParentNode));
     }
   });
