@@ -1,5 +1,5 @@
 import { ESLintUtils } from '@typescript-eslint/utils';
-import rule from './no-get';
+import rule from '../../../rules/no-get';
 
 const ruleTester = new ESLintUtils.RuleTester({ parser: '@typescript-eslint/parser' });
 
@@ -53,3 +53,5 @@ ruleTester.run('no-get rule', rule, {
     },
   ],
 });
+
+export default {};

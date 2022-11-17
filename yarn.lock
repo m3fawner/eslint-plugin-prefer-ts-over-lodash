@@ -208,8 +208,8 @@
 
 "@typescript-eslint/utils@5.43.0", "@typescript-eslint/utils@^5.43.0":
   version "5.43.0"
-  resolved "https://unpm.uberinternal.com/%40typescript-eslint%2Futils/-/utils-5.43.0.tgz#00fdeea07811dbdf68774a6f6eacfee17fcc669f"
-  integrity sha1-AP3uoHgR299od0pvbqz+4X/MZp8=
+  resolved "https://registry.yarnpkg.com/@typescript-eslint/utils/-/utils-5.43.0.tgz#00fdeea07811dbdf68774a6f6eacfee17fcc669f"
+  integrity sha512-8nVpA6yX0sCjf7v/NDfeaOlyaIIqL7OaIGOWSPFqUKK59Gnumd3Wa+2l8oAaYO2lk0sO+SbWFWRSvhu8gLGv4A==
   dependencies:
     "@types/json-schema" "^7.0.9"
     "@types/semver" "^7.3.12"
@@ -1567,9 +1567,9 @@ type-fest@^0.20.2:
   integrity sha1-G/IH9LKPkVg2ZstfvTJ4hzAc1fQ=
 
 typescript@^4.8.4:
-  version "4.8.4"
-  resolved "https://unpm.uberinternal.com/typescript/-/typescript-4.8.4.tgz#c464abca159669597be5f96b8943500b238e60e6"
-  integrity sha1-xGSryhWWaVl75flriUNQCyOOYOY=
+  version "4.9.3"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.9.3.tgz#3aea307c1746b8c384435d8ac36b8a2e580d85db"
+  integrity sha512-CIfGzTelbKNEnLpLdGFgdyKhG23CKdKgQPOBc+OUNrkJ2vr+KSzsSV5kq5iWhEQbok+quxgGzrAtGWCyU7tHnA==
 
 unbox-primitive@^1.0.2:
   version "1.0.2"
