@@ -2,7 +2,31 @@ import {
   ESLintUtils, type TSESTree, type TSESLint, AST_NODE_TYPES,
 } from '@typescript-eslint/utils';
 
-type PathNode = TSESTree.ArrayExpression | TSESTree.StringLiteral | TSESTree.Identifier;
+type PathNode =
+  TSESTree.ArrayExpression
+  | TSESTree.StringLiteral
+  | TSESTree.Identifier
+  | TSESTree.TemplateLiteral;
+function* templateLiteralConverter(
+  expressions: TSESTree.Expression[],
+  quasis: TSESTree.TemplateElement[],
+): Generator<string> {
+  let qIndex = 0;
+  let q: TSESTree.TemplateElement | null = quasis[qIndex];
+  let eIndex = 0;
+  let e: TSESTree.Identifier | null = expressions[eIndex] as TSESTree.Identifier;
+  while (e || q) {
+    q = quasis[qIndex] ?? null;
+    e = expressions[eIndex] as TSESTree.Identifier ?? null;
+    if ((!q && e) || (q && e && e.range[0] < q.range[0])) {
+      yield `[${e.name}]`; // make it a dynamic key reference
+      eIndex += 1;
+    } else if (((!e && q) || (q && e && q.range[0] < e.range[0])) && q.value.raw.length > 0) {
+      yield q.value.raw.replace(/\.$/, ''); // remove trailing period
+      qIndex += 1;
+    }
+  }
+}
 const getPathReplacementString = (path: PathNode): string => {
   switch (path.type) {
     case AST_NODE_TYPES.Literal:
@@ -11,6 +35,9 @@ const getPathReplacementString = (path: PathNode): string => {
       return (path.elements as TSESTree.Literal[]).map(({ value }) => value).join('?.');
     case AST_NODE_TYPES.Identifier:
       return `[${path.name}]`;
+    case AST_NODE_TYPES.TemplateLiteral: {
+      return Array.from(templateLiteralConverter(path.expressions, path.quasis)).join('?.');
+    }
     default:
       return '';
   }
