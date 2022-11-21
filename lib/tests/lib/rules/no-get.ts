@@ -80,13 +80,19 @@ ruleTester.run('no-get rule', rule, {
       // eslint-disable-next-line no-template-curly-in-string
       code: 'import get from \'lodash/get\';const object = {};const path = \'test\';const value = get(object, `nested.${path}`, {});',
       errors: [{ messageId: 'default' }],
-      output: 'const object = {};const path = window.location;const value = object?.nested?.[path] ?? {};',
+      output: 'const object = {};const path = \'test\';const value = object?.nested?.[path] ?? {};',
     },
     {
       // eslint-disable-next-line no-template-curly-in-string
       code: 'import get from \'lodash/get\';const object = {};const path = \'test\';const value = get(object, `nested.${path}.deeper`, {});',
       errors: [{ messageId: 'default' }],
-      output: 'const object = {};const path = window.location;const value = object?.nested?.[path]?.deeper ?? {};',
+      output: 'const object = {};const path = \'test\';const value = object?.nested?.[path]?.deeper ?? {};',
+    },
+    {
+      // eslint-disable-next-line no-template-curly-in-string
+      code: 'import get from \'lodash/get\';const t=(state, action) => ({...state,[stateKey]: {...successMaybeState,data: get(action, `payload.${payloadName}`, {})}})',
+      errors: [{ messageId: 'default' }],
+      output: 'const t=(state, action) => ({...state,[stateKey]: {...successMaybeState,data: action?.payload?.[payloadName] ?? {}}})',
     },
   ],
 });

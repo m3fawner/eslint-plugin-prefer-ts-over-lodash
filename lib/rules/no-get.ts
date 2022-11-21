@@ -21,8 +21,11 @@ function* templateLiteralConverter(
     if ((!q && e) || (q && e && e.range[0] < q.range[0])) {
       yield `[${e.name}]`; // make it a dynamic key reference
       eIndex += 1;
-    } else if (((!e && q) || (q && e && q.range[0] < e.range[0])) && q.value.raw.length > 0) {
-      yield q.value.raw.replace(/\.$/, ''); // remove trailing period
+    } else if (((!e && q) || (q && e && q.range[0] < e.range[0]))) {
+      if (qIndex === quasis.length - 1 && q.value.raw === '') {
+        return;
+      }
+      yield q.value.raw.replace(/\.$/, '').replace(/^\./, ''); // remove leading/trailing period
       qIndex += 1;
     }
   }
