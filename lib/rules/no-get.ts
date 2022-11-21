@@ -54,17 +54,20 @@ type UsagesArg = {
   node: TSESTree.ImportSpecifier | TSESTree.ImportDefaultSpecifier;
   fixer: TSESLint.RuleFixer;
 };
+const getProgramFromNode = (node: TSESTree.Node): TSESTree.Program => {
+  let program = node.parent;
+  while (program?.type !== 'Program') {
+    program = program?.parent;
+  }
+  return program;
+};
 const removeUsages = ({
   context, node, fixer,
 }: UsagesArg): TSESLint.RuleFix[] => {
   const fixes: TSESLint.RuleFix[] = [];
   const sourceCode = context.getSourceCode();
   const namedVariable = node.local.name;
-  let program = node.parent;
-  while (program?.type !== 'Program') {
-    program = program?.parent;
-  }
-  const tokens = sourceCode.getTokens(program);
+  const tokens = sourceCode.getTokens(getProgramFromNode(node));
   tokens.forEach(({ type, value, range }) => {
     const tokenParentNode = sourceCode.getNodeByRangeIndex(range[0])?.parent;
     if (type === 'Identifier' && value === namedVariable && tokenParentNode?.type === 'CallExpression') {
@@ -77,6 +80,14 @@ const removeUsages = ({
     }
   });
   return fixes;
+};
+const getRemoveRangeOfImportStatement = (node: TSESTree.Node): TSESTree.Range => {
+  const program = getProgramFromNode(node);
+  const currentNodeIndex = program.body.findIndex((n) => n === node);
+  if (currentNodeIndex === 0) {
+    return [node.range[0], program.body[1]?.range[0] ?? node.range[1]];
+  }
+  return [program.body[currentNodeIndex - 1]?.range[1] ?? node.range[0], node.range[1]];
 };
 export default ESLintUtils.RuleCreator.withoutDocs({
   meta: {
@@ -102,7 +113,7 @@ export default ESLintUtils.RuleCreator.withoutDocs({
           messageId: 'default',
           node,
           fix: (fixer) => {
-            const fixes = [fixer.remove(parent)];
+            const fixes = [fixer.removeRange(getRemoveRangeOfImportStatement(parent))];
             return [...fixes, ...removeUsages({
               context, node, fixer,
             })];
@@ -121,7 +132,7 @@ export default ESLintUtils.RuleCreator.withoutDocs({
           fix: (fixer) => {
             let fixes = [];
             if (parent.specifiers.length === 1) {
-              fixes = [fixer.remove(parent)];
+              fixes = [fixer.removeRange(getRemoveRangeOfImportStatement(parent))];
             } else {
               const sourceCode = context.getSourceCode();
               const [before, curr, after] = sourceCode.getTokens(node, 1, 1);
