@@ -6,7 +6,8 @@ type PathNode =
   TSESTree.ArrayExpression
   | TSESTree.StringLiteral
   | TSESTree.Identifier
-  | TSESTree.TemplateLiteral;
+  | TSESTree.TemplateLiteral
+  | TSESTree.MemberExpression;
 function* templateLiteralConverter(
   expressions: TSESTree.Expression[],
   quasis: TSESTree.TemplateElement[],
@@ -40,6 +41,9 @@ const getPathReplacementString = (path: PathNode): string => {
       return `[${path.name}]`;
     case AST_NODE_TYPES.TemplateLiteral: {
       return Array.from(templateLiteralConverter(path.expressions, path.quasis)).join('?.');
+    }
+    case AST_NODE_TYPES.MemberExpression: {
+      return `[${(path.object as TSESTree.Identifier).name}.${(path.property as TSESTree.Identifier).name}]`;
     }
     default:
       return '';

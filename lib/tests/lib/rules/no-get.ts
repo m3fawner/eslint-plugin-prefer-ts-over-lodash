@@ -16,83 +16,88 @@ ruleTester.run('no-get rule', rule, {
     },
   ],
   invalid: [
+    // {
+    //   code: 'import get from \'lodash/get\'',
+    //   errors: [{ messageId: 'default' }],
+    //   output: '',
+    // },
+    // {
+    //   code: 'import { get } from \'lodash\'',
+    //   errors: [{ messageId: 'destructured' }],
+    //   output: '',
+    // },
+    // {
+    //   code: 'import { get as _get } from \'lodash\'',
+    //   errors: [{ messageId: 'destructured' }],
+    //   output: '',
+    // },
+    // {
+    //   code: 'import { merge, get } from \'lodash\'',
+    //   errors: [{ messageId: 'destructured' }],
+    //   output: 'import { merge } from \'lodash\'',
+    // },
+    // {
+    //   code: 'import get from \'lodash/get\';const object = {};const value = get(object, \'nested.one\', \'\');',
+    //   errors: [{ messageId: 'default' }],
+    //   output: 'const object = {};const value = object?.nested?.one ?? \'\';',
+    // },
+    // {
+    //   code: 'import _get from \'lodash/get\';const object = {};const value = _get(object, \'nested.two\', \'\');',
+    //   errors: [{ messageId: 'default' }],
+    //   output: 'const object = {};const value = object?.nested?.two ?? \'\';',
+    // },
+    // {
+    //   code: 'import { get } from \'lodash\';const object = {};const value = get(object, \'nested.three\', \'\');',
+    //   errors: [{ messageId: 'destructured' }],
+    //   output: 'const object = {};const value = object?.nested?.three ?? \'\';',
+    // },
+    // {
+    //   code: 'import get from \'lodash/get\';const object = {};const fallback = {};const value = get(object, \'nested\', fallback);',
+    //   errors: [{ messageId: 'default' }],
+    //   output: 'const object = {};const fallback = {};const value = object?.nested ?? fallback;',
+    // },
+    // {
+    //   code: 'import get from \'lodash/get\';const object = {};const value = get(object, \'nested\', {});',
+    //   errors: [{ messageId: 'default' }],
+    //   output: 'const object = {};const value = object?.nested ?? {};',
+    // },
+    // {
+    //   code: 'import get from \'lodash/get\';const object = {};const value = get(object, [\'nested\',\'second\'], {});',
+    //   errors: [{ messageId: 'default' }],
+    //   output: 'const object = {};const value = object?.nested?.second ?? {};',
+    // },
+    // {
+    //   code: 'import get from \'lodash/get\';const object = {};const value = get(object, \'test[0]\', {});',
+    //   errors: [{ messageId: 'default' }],
+    //   output: 'const object = {};const value = object?.test?.[0] ?? {};',
+    // },
+    // {
+    //   code: 'import get from \'lodash/get\';const object = {};const path = window.location;const value = get(object, path, {});',
+    //   errors: [{ messageId: 'default' }],
+    //   output: 'const object = {};const path = window.location;const value = object?.[path] ?? {};',
+    // },
+    // {
+    //   // eslint-disable-next-line no-template-curly-in-string
+    //   code: 'import get from \'lodash/get\';const object = {};const path = \'test\';const value = get(object, `nested.${path}`, {});',
+    //   errors: [{ messageId: 'default' }],
+    //   output: 'const object = {};const path = \'test\';const value = object?.nested?.[path] ?? {};',
+    // },
+    // {
+    //   // eslint-disable-next-line no-template-curly-in-string
+    //   code: 'import get from \'lodash/get\';const object = {};const path = \'test\';const value = get(object, `nested.${path}.deeper`, {});',
+    //   errors: [{ messageId: 'default' }],
+    //   output: 'const object = {};const path = \'test\';const value = object?.nested?.[path]?.deeper ?? {};',
+    // },
+    // {
+    //   // eslint-disable-next-line no-template-curly-in-string
+    //   code: 'import get from \'lodash/get\';const t=(state, action) => ({...state,[stateKey]: {...successMaybeState,data: get(action, `payload.${payloadName}`, {})}})',
+    //   errors: [{ messageId: 'default' }],
+    //   output: 'const t=(state, action) => ({...state,[stateKey]: {...successMaybeState,data: action?.payload?.[payloadName] ?? {}}})',
+    // },
     {
-      code: 'import get from \'lodash/get\'',
+      code: 'import get from \'lodash/get\';const obj={};const other={nested:{prop:\'test\'}};const t=get(obj,nested.prop,{});',
       errors: [{ messageId: 'default' }],
-      output: '',
-    },
-    {
-      code: 'import { get } from \'lodash\'',
-      errors: [{ messageId: 'destructured' }],
-      output: '',
-    },
-    {
-      code: 'import { get as _get } from \'lodash\'',
-      errors: [{ messageId: 'destructured' }],
-      output: '',
-    },
-    {
-      code: 'import { merge, get } from \'lodash\'',
-      errors: [{ messageId: 'destructured' }],
-      output: 'import { merge } from \'lodash\'',
-    },
-    {
-      code: 'import get from \'lodash/get\';const object = {};const value = get(object, \'nested.one\', \'\');',
-      errors: [{ messageId: 'default' }],
-      output: 'const object = {};const value = object?.nested?.one ?? \'\';',
-    },
-    {
-      code: 'import _get from \'lodash/get\';const object = {};const value = _get(object, \'nested.two\', \'\');',
-      errors: [{ messageId: 'default' }],
-      output: 'const object = {};const value = object?.nested?.two ?? \'\';',
-    },
-    {
-      code: 'import { get } from \'lodash\';const object = {};const value = get(object, \'nested.three\', \'\');',
-      errors: [{ messageId: 'destructured' }],
-      output: 'const object = {};const value = object?.nested?.three ?? \'\';',
-    },
-    {
-      code: 'import get from \'lodash/get\';const object = {};const fallback = {};const value = get(object, \'nested\', fallback);',
-      errors: [{ messageId: 'default' }],
-      output: 'const object = {};const fallback = {};const value = object?.nested ?? fallback;',
-    },
-    {
-      code: 'import get from \'lodash/get\';const object = {};const value = get(object, \'nested\', {});',
-      errors: [{ messageId: 'default' }],
-      output: 'const object = {};const value = object?.nested ?? {};',
-    },
-    {
-      code: 'import get from \'lodash/get\';const object = {};const value = get(object, [\'nested\',\'second\'], {});',
-      errors: [{ messageId: 'default' }],
-      output: 'const object = {};const value = object?.nested?.second ?? {};',
-    },
-    {
-      code: 'import get from \'lodash/get\';const object = {};const value = get(object, \'test[0]\', {});',
-      errors: [{ messageId: 'default' }],
-      output: 'const object = {};const value = object?.test?.[0] ?? {};',
-    },
-    {
-      code: 'import get from \'lodash/get\';const object = {};const path = window.location;const value = get(object, path, {});',
-      errors: [{ messageId: 'default' }],
-      output: 'const object = {};const path = window.location;const value = object?.[path] ?? {};',
-    },
-    {
-      // eslint-disable-next-line no-template-curly-in-string
-      code: 'import get from \'lodash/get\';const object = {};const path = \'test\';const value = get(object, `nested.${path}`, {});',
-      errors: [{ messageId: 'default' }],
-      output: 'const object = {};const path = \'test\';const value = object?.nested?.[path] ?? {};',
-    },
-    {
-      // eslint-disable-next-line no-template-curly-in-string
-      code: 'import get from \'lodash/get\';const object = {};const path = \'test\';const value = get(object, `nested.${path}.deeper`, {});',
-      errors: [{ messageId: 'default' }],
-      output: 'const object = {};const path = \'test\';const value = object?.nested?.[path]?.deeper ?? {};',
-    },
-    {
-      // eslint-disable-next-line no-template-curly-in-string
-      code: 'import get from \'lodash/get\';const t=(state, action) => ({...state,[stateKey]: {...successMaybeState,data: get(action, `payload.${payloadName}`, {})}})',
-      errors: [{ messageId: 'default' }],
-      output: 'const t=(state, action) => ({...state,[stateKey]: {...successMaybeState,data: action?.payload?.[payloadName] ?? {}}})',
+      output: 'const obj={};const other={nested:{prop:\'test\'}};const t=obj?.[nested.prop] ?? {};',
     },
   ],
 });
