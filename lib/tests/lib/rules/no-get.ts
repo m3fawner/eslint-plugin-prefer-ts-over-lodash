@@ -3,6 +3,64 @@ import rule from '../../../rules/no-get';
 
 const ruleTester = new ESLintUtils.RuleTester({ parser: '@typescript-eslint/parser' });
 
+const defaultImport = 'import get from \'lodash/get\';';
+const destructuredGetOnly = 'import { get } from \'lodash\';';
+const destructuredGetWithOther = 'import { merge, get } from \'lodash\';';
+const renamedDefaultImport = 'import _get from \'lodash/get\';';
+const shouldRemoveImportCases: string[] = [
+  defaultImport,
+  destructuredGetOnly,
+  renamedDefaultImport,
+];
+const errors = {
+  [defaultImport]: 'default',
+  [renamedDefaultImport]: 'default',
+  [destructuredGetOnly]: 'destructured',
+  [destructuredGetWithOther]: 'destructured',
+} as const;
+const importStatements = [
+  defaultImport,
+  destructuredGetOnly,
+  destructuredGetWithOther,
+  renamedDefaultImport,
+] as const;
+const replacementImport = {
+  [destructuredGetWithOther]: 'import { merge } from \'lodash\';',
+} as const;
+
+type InvalidTestCase = ESLintUtils.InvalidTestCase<'default' | 'destructured', never[]>;
+type TestCaseArgument = {
+  name: string,
+  commonCode?: string;
+  getStatement: string;
+  outputBody: string;
+  prefix?: string;
+};
+const buildTestCasesWithFixes = ({
+  name,
+  commonCode,
+  getStatement,
+  outputBody,
+  prefix,
+}: TestCaseArgument): InvalidTestCase[] => importStatements
+  .map<InvalidTestCase>((importStatement) => ({
+  name: `${name} - ${importStatement}`,
+  code: `
+      ${prefix ?? ''}
+      ${importStatement}
+      ${commonCode ?? ''}
+      const object = {};
+      const value = ${getStatement.replace('get', importStatement === renamedDefaultImport ? '_get' : 'get')};
+    `.trim(),
+  output: `
+      ${prefix ?? ''}${shouldRemoveImportCases.includes(importStatement) ? '' : `
+      ${replacementImport[importStatement as typeof destructuredGetWithOther]}`}
+      ${commonCode ?? ''}
+      const object = {};
+      const value = ${outputBody};
+    `.trim(),
+  errors: [{ messageId: errors[importStatement] }],
+}));
 ruleTester.run('no-get rule', rule, {
   valid: [
     {
@@ -16,228 +74,87 @@ ruleTester.run('no-get rule', rule, {
     },
   ],
   invalid: [
-    {
-      code: 'import get from \'lodash/get\';',
-      errors: [{ messageId: 'default' }],
-      output: '',
-    },
-    {
-      code: 'import { get } from \'lodash\';',
-      errors: [{ messageId: 'destructured' }],
-      output: '',
-    },
-    {
-      code: 'import { get as _get } from \'lodash\';',
-      errors: [{ messageId: 'destructured' }],
-      output: '',
-    },
-    {
-      code: 'import { merge, get } from \'lodash\';',
-      errors: [{ messageId: 'destructured' }],
-      output: 'import { merge } from \'lodash\';',
-    },
-    {
-      code: `
-        import get from 'lodash/get';
-        const object = {};
-        const value = get(object, 'nested.one', '');
+    ...buildTestCasesWithFixes({
+      name: 'Doubly nested property with string literal fallback',
+      getStatement: 'get(object, \'nested.one\', \'\')',
+      outputBody: 'object?.nested?.one ?? \'\'',
+    }),
+    ...buildTestCasesWithFixes({
+      name: 'More deeply nested than one property',
+      getStatement: 'get(object, \'nested.three\', \'\')',
+      outputBody: 'object?.nested?.three ?? \'\'',
+    }),
+    ...buildTestCasesWithFixes({
+      name: 'With variable reference in fallback expression',
+      commonCode: `
+        const fallback = 'test';
       `,
-      errors: [{ messageId: 'default' }],
-      output: `
-        const object = {};
-        const value = object?.nested?.one ?? '';
+      getStatement: 'get(object, \'nested\', fallback)',
+      outputBody: 'object?.nested ?? fallback',
+    }),
+    ...buildTestCasesWithFixes({
+      name: 'With fallback literal',
+      getStatement: 'get(object, \'nested\', {})',
+      outputBody: 'object?.nested ?? {}',
+    }),
+    ...buildTestCasesWithFixes({
+      name: 'Array of path segments',
+      getStatement: 'get(object, [\'nested\', \'second\'], {})',
+      outputBody: 'object?.nested?.second ?? {}',
+    }),
+    ...buildTestCasesWithFixes({
+      name: 'Array references',
+      commonCode: `
+        const test = {
+          test: ['string']
+        };
       `,
-    },
-    {
-      code: `
-        import _get from 'lodash/get';
-        const object = {};
-        const value = _get(object, 'nested.two', '');
-      `,
-      errors: [{ messageId: 'default' }],
-      output: `
-        const object = {};
-        const value = object?.nested?.two ?? '';
-      `,
-    },
-    {
-      code: `
-        import { get } from 'lodash';
-        const object = {};
-        const value = get(object, 'nested.three', '');
-      `,
-      errors: [{ messageId: 'destructured' }],
-      output: `
-        const object = {};
-        const value = object?.nested?.three ?? '';
-      `,
-    },
-    {
-      code: `
-        import get from 'lodash/get';
-        const object = {};
-        const fallback = {};
-        const value = get(object, 'nested', fallback);
-      `,
-      errors: [{ messageId: 'default' }],
-      output: `
-        const object = {};
-        const fallback = {};
-        const value = object?.nested ?? fallback;
-      `,
-    },
-    {
-      code: `
-        import get from 'lodash/get';
-        const object = {};
-        const value = get(object, 'nested', {});
-      `,
-      errors: [{ messageId: 'default' }],
-      output: `
-        const object = {};
-        const value = object?.nested ?? {};
-      `,
-    },
-    {
-      code: `
-        import get from 'lodash/get';
-        const object = {};
-        const value = get(object, ['nested','second'], {});
-      `,
-      errors: [{ messageId: 'default' }],
-      output: `
-        const object = {};
-        const value = object?.nested?.second ?? {};
-      `,
-    },
-    {
-      code: `
-        import get from 'lodash/get';
-        const object = {};
-        const value = get(object, 'test[0]', {});
-      `,
-      errors: [{ messageId: 'default' }],
-      output: `
-        const object = {};
-        const value = object?.test?.[0] ?? {};
-      `,
-    },
-    {
-      code: `
-        import get from 'lodash/get';
-        const object = {};
-        const path = window.location;
-        const value = get(object, path, {});
-      `,
-      errors: [{ messageId: 'default' }],
-      output: `
-        const object = {};
-        const path = window.location;
-        const value = object?.[path] ?? {};
-      `,
-    },
-    {
-      code: `
-        import get from 'lodash/get';
-        const object = {};
+      getStatement: 'get(test, \'test[0]\', {})',
+      outputBody: 'test?.test?.[0] ?? {}',
+    }),
+    ...buildTestCasesWithFixes({
+      name: 'Template string with nesting on both left & right side of interpolation',
+      commonCode: `
         const path = 'test';
-        const value = get(object, \`nested.\${path}\`, {});
       `,
-      errors: [{ messageId: 'default' }],
-      output: `
-        const object = {};
-        const path = 'test';
-        const value = object?.nested?.[path] ?? {};
+      // eslint-disable-next-line no-template-curly-in-string
+      getStatement: 'get(object, `nested.${path}.deeper`, {})',
+      outputBody: 'object?.nested?.[path]?.deeper ?? {}',
+    }),
+    ...buildTestCasesWithFixes({
+      name: 'Template string path including an interpolation',
+      commonCode: `
+        const payloadName = 'payloadName';
       `,
-    },
-    {
-      code: `
-        import get from 'lodash/get';
-        const object = {};
-        const path = 'test';
-        const value = get(object, \`nested.\${path}.deeper\`, {});
-      `,
-      errors: [{ messageId: 'default' }],
-      output: `
-        const object = {};
-        const path = 'test';
-        const value = object?.nested?.[path]?.deeper ?? {};
-      `,
-    },
-    {
-      code: `
-        import get from 'lodash/get';
-        const t = (state, action) => ({
-          ...state,[stateKey]: {
-            ...successMaybeState,
-            data: get(action, \`payload.\${payloadName}\`, {})
-          }
-        });
-      `,
-      errors: [{ messageId: 'default' }],
-      output: `
-        const t = (state, action) => ({
-          ...state,[stateKey]: {
-            ...successMaybeState,
-            data: action?.payload?.[payloadName] ?? {}
-          }
-        });
-      `,
-    },
-    {
-      code: `
-        import get from 'lodash/get';
-        const obj = {};
+      // eslint-disable-next-line no-template-curly-in-string
+      getStatement: 'get(object, `payload.${payloadName}`, {})',
+      outputBody: 'object?.payload?.[payloadName] ?? {}',
+    }),
+    ...buildTestCasesWithFixes({
+      name: 'Import statement between two imports',
+      prefix: 'import test from \'./other\';',
+      commonCode: 'import otherFile from \'./module\';',
+      getStatement: 'get(a, \'b\')',
+      outputBody: 'a?.b',
+    }),
+    ...buildTestCasesWithFixes({
+      name: 'Variable reference for path',
+      commonCode: `
         const other = {
           nested: {
             prop: 'test'
           }
         };
-        const t = get( obj, nested.prop, {});
       `,
-      errors: [{ messageId: 'default' }],
-      output: `
-        const obj = {};
-        const other = {
-          nested: {
-            prop: 'test'
-          }
-        };
-        const t = obj?.[nested.prop] ?? {};
-      `,
-    },
-    {
-      code: `
-        import test from './other';
-        import get from 'lodash/get';
-        import otherFile from './module';
-      `,
-      errors: [{ messageId: 'default' }],
-      output: `
-        import test from './other';
-        import otherFile from './module';
-      `,
-    },
-    {
-      code: `
-        import get from 'lodash/get';
-        import otherFile from './module';
-      `,
-      errors: [{ messageId: 'default' }],
-      output: `
-        import otherFile from './module';
-      `,
-    },
-    {
-      code: `
-        import otherFile from './module';
-        import get from 'lodash/get';
-      `,
-      errors: [{ messageId: 'default' }],
-      output: `
-        import otherFile from './module';
-      `,
-    },
+      getStatement: 'get(obj, nested.prop, {})',
+      outputBody: 'obj?.[nested.prop] ?? {}',
+    }),
+    ...buildTestCasesWithFixes({
+      name: 'Keeps other import',
+      commonCode: 'import otherFile from \'./module\';',
+      getStatement: 'get(a, \'b\')',
+      outputBody: 'a?.b',
+    }),
   ],
 });
 
