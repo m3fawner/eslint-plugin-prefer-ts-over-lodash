@@ -34,7 +34,9 @@ function* templateLiteralConverter(
 const getPathReplacementString = (path: PathNode): string => {
   switch (path.type) {
     case AST_NODE_TYPES.Literal:
-      return path.value.split('.').join('?.').replaceAll(/\[(.*)\]/g, '?.[$1]');
+      // Replace array index inline, but if they start with an index accessor it will
+      // put ?. to begin, which is accounted for in the caller of this function
+      return path.value.split('.').join('?.').replaceAll(/\[([^\]]+)\]/g, '?.[$1]').replace(/^\?\./, '');
     case AST_NODE_TYPES.ArrayExpression:
       return (path.elements as TSESTree.Literal[]).map(({ value }) => value).join('?.');
     case AST_NODE_TYPES.Identifier:

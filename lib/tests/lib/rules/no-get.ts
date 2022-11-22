@@ -155,7 +155,24 @@ ruleTester.run('no-get rule', rule, {
       getStatement: 'get(a, \'b\')',
       outputBody: 'a?.b',
     }),
+    ...buildTestCasesWithFixes({
+      name: 'Starting with an index of an array',
+      commonCode: 'const arr = [];',
+      getStatement: 'get(arr, \'[0].nested\', {})',
+      outputBody: 'arr?.[0]?.nested ?? {}',
+    }),
+    ...buildTestCasesWithFixes({
+      name: 'Starting with an index of an array',
+      commonCode: 'const arr = [];',
+      getStatement: 'get(arr, \'[0][1]\', {})',
+      outputBody: 'arr?.[0]?.[1] ?? {}',
+    }),
+    ...buildTestCasesWithFixes({
+      name: 'Array indexes next to dynamic properties',
+      commonCode: 'const arr = [];',
+      getStatement: 'get(arr, "[0][\'test\']", {})',
+      outputBody: 'arr?.[0]?.[\'test\'] ?? {}',
+    }),
   ],
 });
-
 export default {};
