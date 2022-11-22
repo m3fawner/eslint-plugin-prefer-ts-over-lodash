@@ -63,6 +63,7 @@ const getProgramFromNode = (node: TSESTree.Node): TSESTree.Program => {
   }
   return program;
 };
+const addParenthesis = (str: string): string => `(${str})`;
 const removeUsages = ({
   context, node, fixer,
 }: UsagesArg): TSESLint.RuleFix[] => {
@@ -73,11 +74,16 @@ const removeUsages = ({
   tokens.forEach(({ type, value, range }) => {
     const tokenParentNode = sourceCode.getNodeByRangeIndex(range[0])?.parent;
     if (type === 'Identifier' && value === namedVariable && tokenParentNode?.type === 'CallExpression') {
-      const { arguments: args } = tokenParentNode;
+      const { arguments: args, parent } = tokenParentNode;
       const targetObj = args[0] as TSESTree.Node;
       const path = args[1] as PathNode;
       const fallback = args[2] as TSESTree.Node;
-      fixes.push(fixer.insertTextAfter(tokenParentNode, `${sourceCode.getText(targetObj)}?.${getPathReplacementString(path)}${fallback ? ` ?? ${sourceCode.getText(fallback)}` : ''}`));
+      const shouldWrapInParenthesis = parent?.type === 'MemberExpression';
+      const replacement = `${sourceCode.getText(targetObj)}?.${getPathReplacementString(path)}${fallback ? ` ?? ${sourceCode.getText(fallback)}` : ''}`;
+      fixes.push(fixer.insertTextAfter(
+        tokenParentNode,
+        shouldWrapInParenthesis ? addParenthesis(replacement) : replacement,
+      ));
       fixes.push(fixer.remove(tokenParentNode));
     }
   });

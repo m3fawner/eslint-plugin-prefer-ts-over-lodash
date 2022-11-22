@@ -173,6 +173,11 @@ ruleTester.run('no-get rule', rule, {
       getStatement: 'get(arr, "[0][\'test\']", {})',
       outputBody: 'arr?.[0]?.[\'test\'] ?? {}',
     }),
+    ...buildTestCasesWithFixes({
+      name: 'Invoking a function on the result of the get call',
+      getStatement: 'get(window, \'location.href\', \'\').toUpperCase()',
+      outputBody: '(window?.location?.href ?? \'\').toUpperCase()',
+    }),
   ],
 });
 export default {};
