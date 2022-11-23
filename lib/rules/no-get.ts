@@ -78,7 +78,7 @@ const removeUsages = ({
       const targetObj = args[0] as TSESTree.Node;
       const path = args[1] as PathNode;
       const fallback = args[2] as TSESTree.Node;
-      const shouldWrapInParenthesis = parent?.type === 'MemberExpression';
+      const shouldWrapInParenthesis = parent?.type === 'MemberExpression' || parent?.type === 'LogicalExpression';
       const replacement = `${sourceCode.getText(targetObj)}?.${getPathReplacementString(path)}${fallback ? ` ?? ${sourceCode.getText(fallback)}` : ''}`;
       fixes.push(fixer.insertTextAfter(
         tokenParentNode,

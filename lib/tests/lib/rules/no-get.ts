@@ -36,6 +36,7 @@ type TestCaseArgument = {
   outputBody: string;
   prefix?: string;
 };
+
 const buildTestCasesWithFixes = ({
   name,
   commonCode,
@@ -50,7 +51,7 @@ const buildTestCasesWithFixes = ({
       ${importStatement}
       ${commonCode ?? ''}
       const object = {};
-      const value = ${getStatement.replace('get', importStatement === renamedDefaultImport ? '_get' : 'get')};
+      const value = ${getStatement.replaceAll('get', importStatement === renamedDefaultImport ? '_get' : 'get')};
     `.trim(),
   output: `
       ${prefix ?? ''}${shouldRemoveImportCases.includes(importStatement) ? '' : `
@@ -177,6 +178,11 @@ ruleTester.run('no-get rule', rule, {
       name: 'Invoking a function on the result of the get call',
       getStatement: 'get(window, \'location.href\', \'\').toUpperCase()',
       outputBody: '(window?.location?.href ?? \'\').toUpperCase()',
+    }),
+    ...buildTestCasesWithFixes({
+      name: 'As a logical expression',
+      getStatement: 'get(object, \'test\', \'\') || get(object, \'test2\', \'\')',
+      outputBody: '(object?.test ?? \'\') || (object?.test2 ?? \'\')',
     }),
   ],
 });
