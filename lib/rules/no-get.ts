@@ -9,7 +9,8 @@ type PathNode =
   | TSESTree.TemplateLiteral
   | TSESTree.MemberExpression
   | TSESTree.LogicalExpression
-  | TSESTree.ConditionalExpression;
+  | TSESTree.ConditionalExpression
+  | TSESTree.CallExpression;
 function* templateLiteralConverter(
   expressions: TSESTree.Expression[],
   quasis: TSESTree.TemplateElement[],
@@ -50,7 +51,8 @@ const getPathReplacementString = (path: PathNode, sourceCode: TSESLint.SourceCod
     }
     case AST_NODE_TYPES.Identifier:
     case AST_NODE_TYPES.LogicalExpression:
-    case AST_NODE_TYPES.ConditionalExpression: {
+    case AST_NODE_TYPES.ConditionalExpression:
+    case AST_NODE_TYPES.CallExpression: {
       return `[${sourceCode.getText(path)}]`;
     }
     default:

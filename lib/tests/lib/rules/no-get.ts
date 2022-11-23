@@ -51,7 +51,7 @@ const buildTestCasesWithFixes = ({
       ${importStatement}
       ${commonCode ?? ''}
       const object = {};
-      const value = ${getStatement.replaceAll('get', importStatement === renamedDefaultImport ? '_get' : 'get')};
+      const value = ${getStatement.replaceAll('get(', importStatement === renamedDefaultImport ? '_get(' : 'get(')};
     `.trim(),
   output: `
       ${prefix ?? ''}${shouldRemoveImportCases.includes(importStatement) ? '' : `
@@ -61,7 +61,7 @@ const buildTestCasesWithFixes = ({
       const value = ${outputBody};
     `.trim(),
   errors: [{ messageId: errors[importStatement] }, ...Array.from(
-    new Array(getStatement.match(/get/g)?.length ?? 0),
+    new Array(getStatement.match(/get\(/g)?.length ?? 0),
     (): { messageId: 'usage' } => ({ messageId: 'usage' }),
   )],
 }));
@@ -196,6 +196,12 @@ ruleTester.run('no-get rule', rule, {
       name: 'With a logical expression in the path',
       getStatement: 'get(object, \'left\' || \'right\', \'\')',
       outputBody: 'object?.[\'left\' || \'right\'] ?? \'\'',
+    }),
+    ...buildTestCasesWithFixes({
+      name: 'With a function expression in the path',
+      commonCode: 'const getPathForTest = () => \'path\';',
+      getStatement: 'get(object, getPathForTest(), \'\')',
+      outputBody: 'object?.[getPathForTest()] ?? \'\'',
     }),
   ],
 });
