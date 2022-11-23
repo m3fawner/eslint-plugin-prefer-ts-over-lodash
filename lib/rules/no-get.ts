@@ -74,6 +74,10 @@ const removeUsages = ({
   tokens.forEach(({ type, value, range }) => {
     const tokenParentNode = sourceCode.getNodeByRangeIndex(range[0])?.parent;
     if (type === 'Identifier' && value === namedVariable && tokenParentNode?.type === 'CallExpression') {
+      context.report({
+        messageId: 'usage',
+        node: tokenParentNode,
+      });
       const { arguments: args, parent } = tokenParentNode;
       const targetObj = args[0] as TSESTree.Node;
       const path = args[1] as PathNode;
@@ -107,6 +111,7 @@ export default ESLintUtils.RuleCreator.withoutDocs({
     messages: {
       default: 'Importing lodash/get is not allowed, use optional chaining.',
       destructured: 'Importing get from lodash is not allowed, use optional chaining.',
+      usage: 'Using lodash/get prevents strong type inference and therefore is less effective than optional chaining, a native language feature. Remove its usage by replacing with optional chaining.',
     },
     fixable: 'code',
     schema: [],

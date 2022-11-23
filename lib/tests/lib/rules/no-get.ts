@@ -28,7 +28,7 @@ const replacementImport = {
   [destructuredGetWithOther]: 'import { merge } from \'lodash\';',
 } as const;
 
-type InvalidTestCase = ESLintUtils.InvalidTestCase<'default' | 'destructured', never[]>;
+type InvalidTestCase = ESLintUtils.InvalidTestCase<'default' | 'destructured' | 'usage', never[]>;
 type TestCaseArgument = {
   name: string,
   commonCode?: string;
@@ -60,7 +60,10 @@ const buildTestCasesWithFixes = ({
       const object = {};
       const value = ${outputBody};
     `.trim(),
-  errors: [{ messageId: errors[importStatement] }],
+  errors: [{ messageId: errors[importStatement] }, ...Array.from(
+    new Array(getStatement.match(/get/g)?.length ?? 0),
+    (): { messageId: 'usage' } => ({ messageId: 'usage' }),
+  )],
 }));
 ruleTester.run('no-get rule', rule, {
   valid: [
