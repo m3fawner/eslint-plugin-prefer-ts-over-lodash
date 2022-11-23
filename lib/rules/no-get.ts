@@ -7,7 +7,9 @@ type PathNode =
   | TSESTree.StringLiteral
   | TSESTree.Identifier
   | TSESTree.TemplateLiteral
-  | TSESTree.MemberExpression;
+  | TSESTree.MemberExpression
+  | TSESTree.LogicalExpression
+  | TSESTree.ConditionalExpression;
 function* templateLiteralConverter(
   expressions: TSESTree.Expression[],
   quasis: TSESTree.TemplateElement[],
@@ -31,7 +33,8 @@ function* templateLiteralConverter(
     }
   }
 }
-const getPathReplacementString = (path: PathNode): string => {
+
+const getPathReplacementString = (path: PathNode, sourceCode: TSESLint.SourceCode): string => {
   switch (path.type) {
     case AST_NODE_TYPES.Literal:
       // Replace array index inline, but if they start with an index accessor it will
@@ -39,13 +42,16 @@ const getPathReplacementString = (path: PathNode): string => {
       return path.value.split('.').join('?.').replaceAll(/\[([^\]]+)\]/g, '?.[$1]').replace(/^\?\./, '');
     case AST_NODE_TYPES.ArrayExpression:
       return (path.elements as TSESTree.Literal[]).map(({ value }) => value).join('?.');
-    case AST_NODE_TYPES.Identifier:
-      return `[${path.name}]`;
     case AST_NODE_TYPES.TemplateLiteral: {
       return Array.from(templateLiteralConverter(path.expressions, path.quasis)).join('?.');
     }
     case AST_NODE_TYPES.MemberExpression: {
       return `[${(path.object as TSESTree.Identifier).name}.${(path.property as TSESTree.Identifier).name}]`;
+    }
+    case AST_NODE_TYPES.Identifier:
+    case AST_NODE_TYPES.LogicalExpression:
+    case AST_NODE_TYPES.ConditionalExpression: {
+      return `[${sourceCode.getText(path)}]`;
     }
     default:
       return '';
@@ -83,7 +89,7 @@ const removeUsages = ({
       const path = args[1] as PathNode;
       const fallback = args[2] as TSESTree.Node;
       const shouldWrapInParenthesis = parent?.type === 'MemberExpression' || parent?.type === 'LogicalExpression';
-      const replacement = `${sourceCode.getText(targetObj)}?.${getPathReplacementString(path)}${fallback ? ` ?? ${sourceCode.getText(fallback)}` : ''}`;
+      const replacement = `${sourceCode.getText(targetObj)}?.${getPathReplacementString(path, sourceCode)}${fallback ? ` ?? ${sourceCode.getText(fallback)}` : ''}`;
       fixes.push(fixer.insertTextAfter(
         tokenParentNode,
         shouldWrapInParenthesis ? addParenthesis(replacement) : replacement,

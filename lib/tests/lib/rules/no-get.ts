@@ -187,6 +187,16 @@ ruleTester.run('no-get rule', rule, {
       getStatement: 'get(object, \'test\', \'\') || get(object, \'test2\', \'\')',
       outputBody: '(object?.test ?? \'\') || (object?.test2 ?? \'\')',
     }),
+    ...buildTestCasesWithFixes({
+      name: 'With a conditional expression in the path',
+      getStatement: 'get(object, true ? \'left\' : \'right\', \'\')',
+      outputBody: 'object?.[true ? \'left\' : \'right\'] ?? \'\'',
+    }),
+    ...buildTestCasesWithFixes({
+      name: 'With a logical expression in the path',
+      getStatement: 'get(object, \'left\' || \'right\', \'\')',
+      outputBody: 'object?.[\'left\' || \'right\'] ?? \'\'',
+    }),
   ],
 });
 export default {};
