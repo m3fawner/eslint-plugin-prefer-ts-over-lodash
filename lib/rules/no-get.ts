@@ -2,15 +2,6 @@ import {
   ESLintUtils, type TSESTree, type TSESLint, AST_NODE_TYPES,
 } from '@typescript-eslint/utils';
 
-type PathNode =
-  TSESTree.ArrayExpression
-  | TSESTree.StringLiteral
-  | TSESTree.Identifier
-  | TSESTree.TemplateLiteral
-  | TSESTree.MemberExpression
-  | TSESTree.LogicalExpression
-  | TSESTree.ConditionalExpression
-  | TSESTree.CallExpression;
 function* templateLiteralConverter(
   expressions: TSESTree.Expression[],
   quasis: TSESTree.TemplateElement[],
@@ -35,12 +26,12 @@ function* templateLiteralConverter(
   }
 }
 
-const getPathReplacementString = (path: PathNode, sourceCode: TSESLint.SourceCode): string => {
+const getPathReplacementString = (path: TSESTree.Node, sourceCode: TSESLint.SourceCode): string => {
   switch (path.type) {
     case AST_NODE_TYPES.Literal:
       // Replace array index inline, but if they start with an index accessor it will
       // put ?. to begin, which is accounted for in the caller of this function
-      return path.value.split('.').join('?.').replaceAll(/\[([^\]]+)\]/g, '?.[$1]').replace(/^\?\./, '');
+      return path.value === null ? '' : (path.value as string).split('.').join('?.').replaceAll(/\[([^\]]+)\]/g, '?.[$1]').replace(/^\?\./, '');
     case AST_NODE_TYPES.ArrayExpression:
       return (path.elements as TSESTree.Literal[]).map(({ value }) => value).join('?.');
     case AST_NODE_TYPES.TemplateLiteral: {
@@ -49,14 +40,8 @@ const getPathReplacementString = (path: PathNode, sourceCode: TSESLint.SourceCod
     case AST_NODE_TYPES.MemberExpression: {
       return `[${(path.object as TSESTree.Identifier).name}.${(path.property as TSESTree.Identifier).name}]`;
     }
-    case AST_NODE_TYPES.Identifier:
-    case AST_NODE_TYPES.LogicalExpression:
-    case AST_NODE_TYPES.ConditionalExpression:
-    case AST_NODE_TYPES.CallExpression: {
-      return `[${sourceCode.getText(path)}]`;
-    }
     default:
-      return '';
+      return `[${sourceCode.getText(path)}]`;
   }
 };
 type UsagesArg = {
@@ -88,7 +73,7 @@ const removeUsages = ({
       });
       const { arguments: args, parent } = tokenParentNode;
       const targetObj = args[0] as TSESTree.Node;
-      const path = args[1] as PathNode;
+      const path = args[1] as TSESTree.Node;
       const fallback = args[2] as TSESTree.Node;
       const shouldWrapInParenthesis = parent?.type === 'MemberExpression' || parent?.type === 'LogicalExpression';
       const replacement = `${sourceCode.getText(targetObj)}?.${getPathReplacementString(path, sourceCode)}${fallback ? ` ?? ${sourceCode.getText(fallback)}` : ''}`;
