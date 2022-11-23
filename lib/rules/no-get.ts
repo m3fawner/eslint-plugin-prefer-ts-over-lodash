@@ -35,7 +35,7 @@ const getPathReplacementString = (path: TSESTree.Node, sourceCode: TSESLint.Sour
     case AST_NODE_TYPES.ArrayExpression:
       return (path.elements as TSESTree.Literal[]).map(({ value }) => value).join('?.');
     case AST_NODE_TYPES.TemplateLiteral: {
-      return Array.from(templateLiteralConverter(path.expressions, path.quasis)).join('?.');
+      return Array.from(templateLiteralConverter(path.expressions, path.quasis)).join('?.').replace(/^\?\./, '');
     }
     case AST_NODE_TYPES.MemberExpression: {
       return `[${(path.object as TSESTree.Identifier).name}.${(path.property as TSESTree.Identifier).name}]`;

@@ -203,6 +203,13 @@ ruleTester.run('no-get rule', rule, {
       getStatement: 'get(object, getPathForTest(), \'\')',
       outputBody: 'object?.[getPathForTest()] ?? \'\'',
     }),
+    ...buildTestCasesWithFixes({
+      name: 'Template string with leading interpolation',
+      commonCode: 'const path = \'path\'',
+      // eslint-disable-next-line no-template-curly-in-string
+      getStatement: 'get(object, `${path}.nested`, \'\')',
+      outputBody: 'object?.[path]?.nested ?? \'\'',
+    }),
   ],
 });
 export default {};
