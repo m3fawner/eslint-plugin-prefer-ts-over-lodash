@@ -119,10 +119,16 @@ export default ESLintUtils.RuleCreator.withoutDocs({
           messageId: 'default',
           node,
           fix: (fixer) => {
-            const fixes = [fixer.removeRange(getRemoveRangeOfImportStatement(parent))];
-            return [...fixes, ...removeUsages({
-              context, node, fixer,
-            })];
+            try {
+              const fixes = [fixer.removeRange(getRemoveRangeOfImportStatement(parent))];
+              return [...fixes, ...removeUsages({
+                context, node, fixer,
+              })];
+            } catch (e) {
+              // eslint-disable-next-line no-console
+              console.error(e, context.getSourceCode().getText(parent));
+              return [];
+            }
           },
         });
       }
@@ -136,24 +142,30 @@ export default ESLintUtils.RuleCreator.withoutDocs({
           messageId: 'destructured',
           node,
           fix: (fixer) => {
-            let fixes = [];
-            if (parent.specifiers.length === 1) {
-              fixes = [fixer.removeRange(getRemoveRangeOfImportStatement(parent))];
-            } else {
-              const sourceCode = context.getSourceCode();
-              const [before, curr, after] = sourceCode.getTokens(node, 1, 1);
-              if (before === null) {
-                return null;
+            try {
+              let fixes = [];
+              if (parent.specifiers.length === 1) {
+                fixes = [fixer.removeRange(getRemoveRangeOfImportStatement(parent))];
+              } else {
+                const sourceCode = context.getSourceCode();
+                const [before, curr, after] = sourceCode.getTokens(node, 1, 1);
+                if (before === null) {
+                  return null;
+                }
+                const beforeIsComma = before.type === 'Punctuator' && before.value === ',';
+                fixes = (beforeIsComma ? [fixer.remove(before)] : [])
+                  .concat(fixer.remove(node))
+                  .concat(sourceCode.isSpaceBetweenTokens(curr, after)
+                    ? fixer.removeRange([curr.range[1], curr.range[1] + 1]) : []);
               }
-              const beforeIsComma = before.type === 'Punctuator' && before.value === ',';
-              fixes = (beforeIsComma ? [fixer.remove(before)] : [])
-                .concat(fixer.remove(node))
-                .concat(sourceCode.isSpaceBetweenTokens(curr, after)
-                  ? fixer.removeRange([curr.range[1], curr.range[1] + 1]) : []);
+              return [...fixes, ...removeUsages({
+                context, node, fixer,
+              })];
+            } catch (e) {
+              // eslint-disable-next-line no-console
+              console.error(e, context.getSourceCode().getText(parent));
+              return [];
             }
-            return [...fixes, ...removeUsages({
-              context, node, fixer,
-            })];
           },
         });
       }

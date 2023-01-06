@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-prefer-ts-over-lodash",
-  "version": "0.0.0-rc.15",
+  "version": "0.0.0-rc.16",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "files": [
@@ -9,6 +9,7 @@
   "license": "MIT",
   "scripts": {
     "start": "ts-node-dev --respawn ./lib/tests/lib/rules/no-get.ts",
+    "test": "ts-node ./lib/tests/lib/rules/no-get.ts",
     "build": "rm -rf dist && tsc -p tsconfig.cjs.json && tsc -p tsconfig.json",
     "prepare": "yarn build"
   },
