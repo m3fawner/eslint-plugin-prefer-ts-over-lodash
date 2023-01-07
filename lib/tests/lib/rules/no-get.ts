@@ -227,6 +227,11 @@ ruleTester.run('no-get rule', rule, {
       getStatement: 'get(object, [\'nested.literal\', \'another\'])',
       outputBody: 'object?.nested?.literal?.another',
     }),
+    ...buildTestCasesWithFixes({
+      name: 'With number literal path',
+      getStatement: 'get(object, 0)',
+      outputBody: 'object?.[0]',
+    }),
     // ...buildTestCasesWithFixes({
     //   name: 'With integer based indexes as dot notation properties in the path',
     //   getStatement: 'get(object, \'nested.0\')',

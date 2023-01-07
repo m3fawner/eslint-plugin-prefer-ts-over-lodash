@@ -34,6 +34,9 @@ const getPathFromLiteral = (path: TSESTree.Literal): string => {
   if (path.value === null) {
     return '';
   }
+  if (typeof path.value === 'number') {
+    return `[${path.value}]`;
+  }
   return (path.value as string).split('.').join('?.').replaceAll(/\[([^\]]+)\]/g, '?.[$1]').replace(/^\?\./, '');
 };
 const getPathReplacementString = (path: TSESTree.Node, sourceCode: TSESLint.SourceCode): string => {
