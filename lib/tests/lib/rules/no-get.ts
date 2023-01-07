@@ -222,6 +222,11 @@ ruleTester.run('no-get rule', rule, {
       getStatement: 'get(object, [getPath(), \'nested\'])',
       outputBody: 'object?.[getPath()]?.nested',
     }),
+    ...buildTestCasesWithFixes({
+      name: 'With array syntax where string literal in array is dot notation',
+      getStatement: 'get(object, [\'nested.literal\', \'another\'])',
+      outputBody: 'object?.nested?.literal?.another',
+    }),
     // ...buildTestCasesWithFixes({
     //   name: 'With integer based indexes as dot notation properties in the path',
     //   getStatement: 'get(object, \'nested.0\')',
