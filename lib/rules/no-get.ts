@@ -26,6 +26,8 @@ function* templateLiteralConverter(
   }
 }
 
+type NonNullArrayExpressionElements = Array<Exclude<TSESTree.ArrayExpression['elements'][number], null>>;
+const removeNullElements = (eles: TSESTree.ArrayExpression['elements']): NonNullArrayExpressionElements => eles.filter((ele) => ele !== null) as NonNullArrayExpressionElements;
 const getPathReplacementString = (path: TSESTree.Node, sourceCode: TSESLint.SourceCode): string => {
   switch (path.type) {
     case AST_NODE_TYPES.Literal:
@@ -33,7 +35,14 @@ const getPathReplacementString = (path: TSESTree.Node, sourceCode: TSESLint.Sour
       // put ?. to begin, which is accounted for in the caller of this function
       return path.value === null ? '' : (path.value as string).split('.').join('?.').replaceAll(/\[([^\]]+)\]/g, '?.[$1]').replace(/^\?\./, '');
     case AST_NODE_TYPES.ArrayExpression:
-      return (path.elements as TSESTree.Literal[]).map(({ value }) => value).join('?.');
+      return removeNullElements(path.elements)
+        .map((element) => {
+          if (element.type === AST_NODE_TYPES.Literal) {
+            return element.value;
+          }
+          return `[${sourceCode.getText(element)}]`;
+        })
+        .join('?.');
     case AST_NODE_TYPES.TemplateLiteral: {
       return Array.from(templateLiteralConverter(path.expressions, path.quasis)).join('?.').replace(/^\?\./, '');
     }

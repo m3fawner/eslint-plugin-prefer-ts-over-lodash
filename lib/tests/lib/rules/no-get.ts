@@ -210,12 +210,18 @@ ruleTester.run('no-get rule', rule, {
       getStatement: 'get(object, `${path}.nested`, \'\')',
       outputBody: 'object?.[path]?.nested ?? \'\'',
     }),
-    // ...buildTestCasesWithFixes({
-    //   name: 'With array syntax for paths with variables',
-    //   commonCode: 'const path = \'path\'',
-    //   getStatement: 'get(object, [path, \'nested\'])',
-    //   outputBody: 'object?.[path]?.nested',
-    // }),
+    ...buildTestCasesWithFixes({
+      name: 'With array syntax for paths with variables',
+      commonCode: 'const path = \'path\'',
+      getStatement: 'get(object, [path, \'nested\'])',
+      outputBody: 'object?.[path]?.nested',
+    }),
+    ...buildTestCasesWithFixes({
+      name: 'With array syntax for paths with function expressions',
+      commonCode: 'const getPath = () => \'path\'',
+      getStatement: 'get(object, [getPath(), \'nested\'])',
+      outputBody: 'object?.[getPath()]?.nested',
+    }),
     // ...buildTestCasesWithFixes({
     //   name: 'With integer based indexes as dot notation properties in the path',
     //   getStatement: 'get(object, \'nested.0\')',
