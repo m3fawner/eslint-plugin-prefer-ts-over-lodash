@@ -130,7 +130,7 @@ const removeUsages = ({
       const targetObj = args[0] as TSESTree.Node;
       const path = args[1] as TSESTree.Node;
       const fallback = args[2] as TSESTree.Node;
-      const shouldWrapInParenthesis = parent?.type === 'MemberExpression' || parent?.type === 'LogicalExpression';
+      const shouldWrapInParenthesis = parent?.type === 'MemberExpression' || parent?.type === 'LogicalExpression' || parent?.type === 'BinaryExpression';
       const replacement = `${sourceCode.getText(targetObj)}?.${getPathReplacementString(path, sourceCode)}${fallback ? ` ?? ${sourceCode.getText(fallback)}` : ''}`;
       fixes.push(fixer.insertTextAfter(
         tokenParentNode,

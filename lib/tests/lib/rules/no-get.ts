@@ -251,11 +251,16 @@ ruleTester.run('no-get rule', rule, {
       getStatement: 'get(object, `${props.object}.nested`, \'\')',
       outputBody: 'object?.[props.object]?.nested ?? \'\'',
     }),
-    // ...buildTestCasesWithFixes({
-    //   name: 'Using the result as a part of a logic expression with fallback',
-    //   getStatement: 'get(object, \'path\', 5) === 5',
-    //   outputBody: '(object?.path ?? 5) === 5',
-    // }),
+    ...buildTestCasesWithFixes({
+      name: 'Using the result as a part of a logic expression with fallback',
+      getStatement: 'get(object, \'path\', 5) === 5',
+      outputBody: '(object?.path ?? 5) === 5',
+    }),
+    ...buildTestCasesWithFixes({
+      name: 'Within a ternary expression',
+      getStatement: 'get(object, \'path\', false) ? get(object, \'other\') : get(object, \'third\')',
+      outputBody: 'object?.path ?? false ? object?.other : object?.third',
+    }),
     // ...buildTestCasesWithFixes({
     //   name: 'Nested get calls',
     //   getStatement: 'get(object, get(object, \'test\', \'\'), \'test\')',
