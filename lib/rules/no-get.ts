@@ -28,6 +28,14 @@ function* templateLiteralConverter(
 
 type NonNullArrayExpressionElements = Array<Exclude<TSESTree.ArrayExpression['elements'][number], null>>;
 const removeNullElements = (eles: TSESTree.ArrayExpression['elements']): NonNullArrayExpressionElements => eles.filter((ele) => ele !== null) as NonNullArrayExpressionElements;
+const isValidDotNotationProperty = (property: string): boolean => /^[^\d][_\w\d$]*$/.test(property);
+const joinBracketedProperties = (str: string): string => {
+  // If only one bracketed property
+  if (str.indexOf('[') === str.lastIndexOf('[')) {
+    return `?.${str}`;
+  }
+  return str.split('[').join('?.['); // spit removes the [, add back in with ?.
+};
 const getPathFromLiteral = (path: TSESTree.Literal): string => {
   // Replace array index inline, but if they start with an index accessor it will
   // put ?. to begin, which is accounted for in the caller of this function
@@ -37,7 +45,35 @@ const getPathFromLiteral = (path: TSESTree.Literal): string => {
   if (typeof path.value === 'number') {
     return `[${path.value}]`;
   }
-  return (path.value as string).split('.').join('?.').replaceAll(/\[([^\]]+)\]/g, '?.[$1]').replace(/^\?\./, '');
+  const pathSegments = (path.value as string).split('.');
+  const joinedSegments = pathSegments.reduce((acc, segment) => {
+    const firstBracket = segment.indexOf('[');
+    let segmentValue = '';
+    // if the segment is a bracketed property, then there is no rest to worry about as the
+    // whole segment must be a set of bracketed properties and can be dropped into the acc
+    if (firstBracket === 0) {
+      segmentValue = joinBracketedProperties(segment);
+    } else {
+      // if no bracket, 0 to undefined is the whole string
+      const upToBracket = segment.substring(0, firstBracket === -1 ? undefined : firstBracket);
+      const rest = firstBracket === -1 ? '' : segment.substring(firstBracket);
+      const joinedWithChaining = rest && joinBracketedProperties(rest);
+      if (isValidDotNotationProperty(upToBracket)) {
+        segmentValue = upToBracket + joinedWithChaining;
+      // Index properties
+      } else if (/^\d/.test(upToBracket)) {
+        segmentValue = `[${upToBracket}]${joinedWithChaining}`;
+      // Properties that require quotes (i.e. x-header-value)
+      } else {
+        segmentValue = `['${upToBracket}']${joinedWithChaining}`;
+      }
+    }
+    if (acc) {
+      return `${acc}?.${segmentValue}`;
+    }
+    return segmentValue;
+  }, '');
+  return joinedSegments.replace(/^\?\./, '');
 };
 const getPathReplacementString = (path: TSESTree.Node, sourceCode: TSESLint.SourceCode): string => {
   switch (path.type) {
