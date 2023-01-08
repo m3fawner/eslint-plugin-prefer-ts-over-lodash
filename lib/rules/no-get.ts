@@ -5,6 +5,7 @@ import {
 function* templateLiteralConverter(
   expressions: TSESTree.Expression[],
   quasis: TSESTree.TemplateElement[],
+  sourceCode: TSESLint.SourceCode,
 ): Generator<string> {
   let qIndex = 0;
   let q: TSESTree.TemplateElement | null = quasis[qIndex];
@@ -14,7 +15,7 @@ function* templateLiteralConverter(
     q = quasis[qIndex] ?? null;
     e = expressions[eIndex] as TSESTree.Identifier ?? null;
     if ((!q && e) || (q && e && e.range[0] < q.range[0])) {
-      yield `[${e.name}]`; // make it a dynamic key reference
+      yield `[${sourceCode.getText(e)}]`; // make it a dynamic key reference
       eIndex += 1;
     } else if (((!e && q) || (q && e && q.range[0] < e.range[0]))) {
       if (qIndex === quasis.length - 1 && q.value.raw === '') {
@@ -89,7 +90,7 @@ const getPathReplacementString = (path: TSESTree.Node, sourceCode: TSESLint.Sour
         })
         .join('?.');
     case AST_NODE_TYPES.TemplateLiteral: {
-      return Array.from(templateLiteralConverter(path.expressions, path.quasis)).join('?.').replace(/^\?\./, '');
+      return Array.from(templateLiteralConverter(path.expressions, path.quasis, sourceCode)).join('?.').replace(/^\?\./, '');
     }
     case AST_NODE_TYPES.MemberExpression: {
       return `[${(path.object as TSESTree.Identifier).name}.${(path.property as TSESTree.Identifier).name}]`;

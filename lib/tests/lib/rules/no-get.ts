@@ -245,12 +245,12 @@ ruleTester.run('no-get rule', rule, {
       getStatement: 'get(object, \'x-property\')',
       outputBody: 'object?.[\'x-property\']',
     }),
-    // ...buildTestCasesWithFixes({
-    //   name: 'With a path that has a template string referencing a nested property',
-    //   // eslint-disable-next-line no-template-curly-in-string
-    //   getStatement: 'get(object, `${props.object}.nested`, \'\')',
-    //   outputBody: 'object?.[props.object]?.nested ?? \'\'',
-    // }),
+    ...buildTestCasesWithFixes({
+      name: 'With a path that has a template string referencing a nested property',
+      // eslint-disable-next-line no-template-curly-in-string
+      getStatement: 'get(object, `${props.object}.nested`, \'\')',
+      outputBody: 'object?.[props.object]?.nested ?? \'\'',
+    }),
     // ...buildTestCasesWithFixes({
     //   name: 'Using the result as a part of a logic expression with fallback',
     //   getStatement: 'get(object, \'path\', 5) === 5',
