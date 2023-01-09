@@ -35,6 +35,7 @@ type TestCaseArgument = {
   getStatement: string;
   outputBody: string;
   prefix?: string;
+  usageErrorCount?: number
 };
 
 const buildTestCasesWithFixes = ({
@@ -43,6 +44,7 @@ const buildTestCasesWithFixes = ({
   getStatement,
   outputBody,
   prefix,
+  usageErrorCount,
 }: TestCaseArgument): InvalidTestCase[] => importStatements
   .map<InvalidTestCase>((importStatement) => ({
   name: `${name} - ${importStatement}`,
@@ -61,7 +63,7 @@ const buildTestCasesWithFixes = ({
       const value = ${outputBody};
     `.trim(),
   errors: [{ messageId: errors[importStatement] }, ...Array.from(
-    new Array(getStatement.match(/get\(/g)?.length ?? 0),
+    new Array(usageErrorCount ?? (getStatement.match(/get\(/g)?.length ?? 0)),
     (): { messageId: 'usage' } => ({ messageId: 'usage' }),
   )],
 }));
@@ -261,11 +263,12 @@ ruleTester.run('no-get rule', rule, {
       getStatement: 'get(object, \'path\', false) ? get(object, \'other\') : get(object, \'third\')',
       outputBody: 'object?.path ?? false ? object?.other : object?.third',
     }),
-    // ...buildTestCasesWithFixes({
-    //   name: 'Nested get calls',
-    //   getStatement: 'get(object, get(object, \'test\', \'\'), \'test\')',
-    //   outputBody: 'object?.[object?.test ?? \'\'] ?? \'test\'',
-    // }),
+    ...buildTestCasesWithFixes({
+      name: 'Nested get calls',
+      getStatement: 'get(object, get(object, \'nested\', \'\'), \'test\')',
+      outputBody: 'object?.[object?.nested ?? \'\'] ?? \'test\'',
+      usageErrorCount: 1,
+    }),
   ],
 });
 export default {};

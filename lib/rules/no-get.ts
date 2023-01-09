@@ -76,7 +76,18 @@ const getPathFromLiteral = (path: TSESTree.Literal): string => {
   }, '');
   return joinedSegments.replace(/^\?\./, '');
 };
-const getPathReplacementString = (path: TSESTree.Node, sourceCode: TSESLint.SourceCode): string => {
+const isNodeAlsoAGet = (getName: string, parent?: TSESTree.Node): boolean => {
+  if (!parent) return false;
+  if (parent.type !== 'CallExpression') return false;
+  if (parent.callee.type !== 'Identifier') return false;
+  if (parent.callee.name !== getName) return false;
+  return true;
+};
+const getPathReplacementString = (
+  path: TSESTree.Node,
+  sourceCode: TSESLint.SourceCode,
+  namedVariable: string,
+): string => {
   switch (path.type) {
     case AST_NODE_TYPES.Literal:
       return getPathFromLiteral(path);
@@ -95,9 +106,27 @@ const getPathReplacementString = (path: TSESTree.Node, sourceCode: TSESLint.Sour
     case AST_NODE_TYPES.MemberExpression: {
       return `[${(path.object as TSESTree.Identifier).name}.${(path.property as TSESTree.Identifier).name}]`;
     }
+    case AST_NODE_TYPES.CallExpression: {
+      if (isNodeAlsoAGet(namedVariable, path)) {
+        // eslint-disable-next-line @typescript-eslint/no-use-before-define
+        return `[${getReplacementStringForGetCallExpression(path, sourceCode, namedVariable)}]`;
+      }
+      return `[${sourceCode.getText(path)}]`;
+    }
     default:
       return `[${sourceCode.getText(path)}]`;
   }
+};
+const getReplacementStringForGetCallExpression = (
+  getNode: TSESTree.CallExpression,
+  sourceCode: TSESLint.SourceCode,
+  getName: string,
+): string => {
+  const { arguments: args } = getNode;
+  const targetObj = args[0] as TSESTree.Node;
+  const path = args[1] as TSESTree.Node;
+  const fallback = args[2] as TSESTree.Node;
+  return `${sourceCode.getText(targetObj)}?.${getPathReplacementString(path, sourceCode, getName)}${fallback ? ` ?? ${sourceCode.getText(fallback)}` : ''}`;
 };
 type UsagesArg = {
   context: Parameters<ESLintUtils.RuleCreateAndOptions<any, any, any>['create']>[0];
@@ -121,17 +150,18 @@ const removeUsages = ({
   const tokens = sourceCode.getTokens(getProgramFromNode(node));
   tokens.forEach(({ type, value, range }) => {
     const tokenParentNode = sourceCode.getNodeByRangeIndex(range[0])?.parent;
-    if (type === 'Identifier' && value === namedVariable && tokenParentNode?.type === 'CallExpression') {
+    if (type === 'Identifier' && value === namedVariable && tokenParentNode?.type === 'CallExpression' && !isNodeAlsoAGet(namedVariable, tokenParentNode.parent)) {
       context.report({
         messageId: 'usage',
         node: tokenParentNode,
       });
-      const { arguments: args, parent } = tokenParentNode;
-      const targetObj = args[0] as TSESTree.Node;
-      const path = args[1] as TSESTree.Node;
-      const fallback = args[2] as TSESTree.Node;
-      const shouldWrapInParenthesis = parent?.type === 'MemberExpression' || parent?.type === 'LogicalExpression' || parent?.type === 'BinaryExpression';
-      const replacement = `${sourceCode.getText(targetObj)}?.${getPathReplacementString(path, sourceCode)}${fallback ? ` ?? ${sourceCode.getText(fallback)}` : ''}`;
+      const tokenParentNodeType = tokenParentNode.parent?.type;
+      const shouldWrapInParenthesis = tokenParentNodeType === 'MemberExpression' || tokenParentNodeType === 'LogicalExpression' || tokenParentNodeType === 'BinaryExpression';
+      const replacement = getReplacementStringForGetCallExpression(
+        tokenParentNode,
+        sourceCode,
+        namedVariable,
+      );
       fixes.push(fixer.insertTextAfter(
         tokenParentNode,
         shouldWrapInParenthesis ? addParenthesis(replacement) : replacement,

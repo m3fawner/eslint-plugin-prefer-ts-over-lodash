@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-prefer-ts-over-lodash",
-  "version": "0.0.0-rc.22",
+  "version": "0.0.0-rc.23",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "files": [
